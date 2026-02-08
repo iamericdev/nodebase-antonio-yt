@@ -1,14 +1,13 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -18,12 +17,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { SocialButtons } from "./social-buttons";
 
 const loginSchema = z.object({
@@ -44,6 +44,9 @@ export const LoginForm = () => {
   });
 
   const onSubmit = (data: LoginFormValues) => {
+    toast.loading("Logging in...", {
+      id: "login",
+    });
     authClient.signIn.email(
       {
         email: data.email,
@@ -52,16 +55,16 @@ export const LoginForm = () => {
       },
       {
         onSuccess: () => {
-          toast.success("Logged in successfully");
+          toast.success("Logged in successfully", { id: "login" });
         },
         onError: ({ error: errorResponse }) => {
-          toast.error(errorResponse.message || "Something went wrong");
+          toast.error(errorResponse.message || "Something went wrong", {
+            id: "login",
+          });
         },
       },
     );
   };
-
-  const isPending = form.formState.isSubmitting;
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,7 +77,7 @@ export const LoginForm = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-6">
-                <SocialButtons isPending={isPending} />
+                <SocialButtons isPending={form.formState.isSubmitting} />
 
                 <div className="grid gap-6">
                   <FormField
@@ -111,8 +114,12 @@ export const LoginForm = () => {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={isPending} className="w-full">
-                    Login
+                  <Button
+                    type="submit"
+                    disabled={form.formState.isSubmitting}
+                    className="w-full"
+                  >
+                    {form.formState.isSubmitting ? "Logging in..." : "Login"}
                   </Button>
                 </div>
 
