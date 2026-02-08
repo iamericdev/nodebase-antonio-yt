@@ -26,12 +26,3 @@ export const requireUnAuth = async () => {
 
   return session;
 };
-
-export const socialAuth = async (provider: "google" | "github") => {
-  const data = await authClient.signIn.social({
-    provider,
-    callbackURL: "/",
-  });
-
-  return data;
-};
