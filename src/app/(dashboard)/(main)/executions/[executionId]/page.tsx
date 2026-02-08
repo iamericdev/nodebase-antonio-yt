@@ -4,10 +4,10 @@ interface ExecutionIdPageProps {
   params: Promise<{ executionId: string }>;
 }
 
-const ExecutonIdPage = async ({ params }: ExecutionIdPageProps) => {
+const ExecutionIdPage = async ({ params }: ExecutionIdPageProps) => {
   await requireAuth();
   const { executionId } = await params;
-  return <div>ExecutonIdPage: {executionId}</div>;
+  return <div>ExecutionIdPage: {executionId}</div>;
 };
 
-export default ExecutonIdPage;
+export default ExecutionIdPage;
