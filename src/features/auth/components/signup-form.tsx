@@ -20,12 +20,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FaGithub, FaGoogle } from "react-icons/fa";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { socialAuth } from "../auth-utils";
+import { SocialButtons } from "./social-buttons";
 
 const signupSchema = z
   .object({
@@ -51,8 +50,8 @@ export const SignupForm = () => {
     },
   });
 
-  const onSubmit = async (data: SignupFormValues) => {
-    await authClient.signUp.email(
+  const onSubmit = (data: SignupFormValues) => {
+    authClient.signUp.email(
       {
         email: data.email,
         password: data.password,
@@ -72,23 +71,6 @@ export const SignupForm = () => {
     );
   };
 
-  const handleSocialAuth = async (provider: "google" | "github") => {
-    try {
-      const data = await socialAuth(provider);
-
-      if (data.error) {
-        toast.error(data.error.message);
-        return;
-      }
-
-      toast.success("Account created successfully");
-      form.reset();
-      router.push("/");
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
   const isPending = form.formState.isSubmitting;
 
   return (
@@ -102,28 +84,7 @@ export const SignupForm = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-6">
-                <div className="flex flex-col gap-4">
-                  <Button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => handleSocialAuth("github")}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <FaGithub className="mr-2 h-4 w-4" />
-                    Continue with GitHub
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => handleSocialAuth("google")}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <FaGoogle className="mr-2 h-4 w-4" />
-                    Continue with Google
-                  </Button>
-                </div>
+                <SocialButtons isPending={isPending} />
 
                 <div className="grid gap-6">
                   <FormField

@@ -20,9 +20,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FaGithub, FaGoogle } from "react-icons/fa";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { SocialButtons } from "./social-buttons";
 
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -32,6 +34,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm = () => {
+  const router = useRouter();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,9 +43,22 @@ export const LoginForm = () => {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    // await authClient.signIn(data);
-    console.log(data)
+  const onSubmit = (data: LoginFormValues) => {
+    authClient.signIn.email(
+      {
+        email: data.email,
+        password: data.password,
+        callbackURL: "/",
+      },
+      {
+        onSuccess: () => {
+          toast.success("Logged in successfully");
+        },
+        onError: ({ error: errorResponse }) => {
+          toast.error(errorResponse.message || "Something went wrong");
+        },
+      },
+    );
   };
 
   const isPending = form.formState.isSubmitting;
@@ -58,26 +74,7 @@ export const LoginForm = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="grid gap-6">
-                <div className="flex flex-col gap-4">
-                  <Button
-                    type="button"
-                    disabled={isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <FaGithub className="mr-2 h-4 w-4" />
-                    Continue with GitHub
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <FaGoogle className="mr-2 h-4 w-4" />
-                    Continue with Google
-                  </Button>
-                </div>
+                <SocialButtons isPending={isPending} />
 
                 <div className="grid gap-6">
                   <FormField
