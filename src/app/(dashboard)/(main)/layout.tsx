@@ -1,0 +1,13 @@
+import { AppHeader } from "@/components/ui/app-header";
+import React from "react";
+
+const MainLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <>
+      <AppHeader />
+      <main className="flex-1">{children}</main>
+    </>
+  );
+};
+
+export default MainLayout;

@@ -9,7 +9,10 @@
     "lint": "biome check",
     "format": "biome format --write",
     "inngest:dev": "inngest-cli dev",
-    "dev:all": "mprocs"
+    "dev:all": "mprocs",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",
