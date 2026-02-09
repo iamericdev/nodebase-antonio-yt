@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/ui/app-header";
+import { AppHeader } from "@/components/app-header";
 import React from "react";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
