@@ -3,6 +3,7 @@ import { TRPCReactProvider } from "@/trpc/client";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,8 +43,10 @@ export default function RootLayout({
           shadow="0 0 10px rgb(46, 144, 250),0 0 5px rgb(46, 144, 250)"
         />
         <TRPCReactProvider>
-          {children}
-          <Toaster />
+          <NuqsAdapter>
+            {children}
+            <Toaster />
+          </NuqsAdapter>
         </TRPCReactProvider>
       </body>
     </html>

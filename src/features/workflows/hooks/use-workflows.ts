@@ -4,25 +4,30 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { useWorkflowsParams } from "./use-workflows-params";
 
 /**
  * Hook to fetch all workflows using suspense
  */
 export const useSuspenseWorkflows = () => {
+  const [params] = useWorkflowsParams();
   const trpc = useTRPC();
-  return useSuspenseQuery(trpc.workflows.getMany.queryOptions());
+  return useSuspenseQuery(trpc.workflows.getMany.queryOptions(params));
 };
 
 /**
  * Hook to create a new workflow
  */
 export const useCreateWorkflow = () => {
+  const [params] = useWorkflowsParams();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   return useMutation(
     trpc.workflows.create.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.workflows.getMany.queryOptions(params),
+        );
       },
       onError: (error) => {
         throw error;

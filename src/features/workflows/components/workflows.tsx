@@ -1,21 +1,26 @@
 "use client";
 
-import { EntityContainer, EntityHeader } from "@/components/entity-component";
-import { Input } from "@/components/ui/input";
+import {
+  EntityContainer,
+  EntityHeader,
+  EntityPagination,
+  EntitySearch,
+} from "@/components/entity-component";
 import { useUpgradeModal } from "@/hooks/use-upgrade-modal";
-import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useEntitySearch } from "../hooks/use-entity-search";
 import {
   useCreateWorkflow,
   useSuspenseWorkflows,
 } from "../hooks/use-workflows";
+import { useWorkflowsParams } from "../hooks/use-workflows-params";
 
 export const WorkflowsList = () => {
   const { data: workflows } = useSuspenseWorkflows();
   return (
     <div>
-      {workflows.map((workflow) => (
+      {workflows.items.map((workflow) => (
         <div key={workflow.id}>{workflow.name}</div>
       ))}
     </div>
@@ -61,17 +66,38 @@ export const WorkflowsContainer = ({
   return (
     <EntityContainer
       header={<WorkflowsHeader />}
-      search={
-        <>
-          <div className="flex items-center gap-x-2 relative">
-            <SearchIcon className="size-4 absolute left-2 top-1/2 -translate-y-1/2" />
-            <Input placeholder="Search workflows..." className="w-full pl-8" />
-          </div>
-        </>
-      }
-      pagination={<></>}
+      search={<WorkflowsSearch />}
+      pagination={<WorkflowsPagination />}
     >
       {children}
     </EntityContainer>
+  );
+};
+
+export const WorkflowsSearch = () => {
+  const [params, setParams] = useWorkflowsParams();
+  const { searchValue, onSearchChange } = useEntitySearch({
+    params,
+    setParams,
+  });
+  return (
+    <EntitySearch
+      value={searchValue}
+      onChange={onSearchChange}
+      placeholder="Search workflows..."
+    />
+  );
+};
+
+export const WorkflowsPagination = () => {
+  const workflows = useSuspenseWorkflows();
+  const [params, setParams] = useWorkflowsParams();
+  return (
+    <EntityPagination
+      disabled={workflows.isFetching}
+      page={params.page}
+      totalPages={workflows.data.totalPages}
+      onPageChange={(page) => setParams({ ...params, page })}
+    />
   );
 };
