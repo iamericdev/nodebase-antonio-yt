@@ -28,7 +28,7 @@ export const useEntitySearch = ({
       });
     }, debounceMs);
     return () => clearTimeout(timeout);
-  }, [localSearch, params, setParams, debounceMs]);
+  }, [localSearch, setParams, debounceMs]);
 
   useEffect(() => {
     setLocalSearch(params.search);

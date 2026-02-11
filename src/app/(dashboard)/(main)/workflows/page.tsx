@@ -1,7 +1,9 @@
 import { requireAuth } from "@/features/auth/auth-utils";
 import {
   WorkflowsContainer,
+  WorkflowsErrorView,
   WorkflowsList,
+  WorkflowsLoadingView,
 } from "@/features/workflows/components/workflows";
 import { workflowsParamsLoader } from "@/features/workflows/server/params-loader";
 import { prefetchWorkflows } from "@/features/workflows/server/prefetch";
@@ -21,15 +23,15 @@ const WorkflowsPage = async ({ searchParams }: Props) => {
   prefetchWorkflows(params);
 
   return (
-    <WorkflowsContainer>
-      <HydrateClient>
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-          <Suspense fallback={<div>Loading...</div>}>
+    <HydrateClient>
+      <WorkflowsContainer>
+        <ErrorBoundary fallback={<WorkflowsErrorView />}>
+          <Suspense fallback={<WorkflowsLoadingView />}>
             <WorkflowsList />
           </Suspense>
         </ErrorBoundary>
-      </HydrateClient>
-    </WorkflowsContainer>
+      </WorkflowsContainer>
+    </HydrateClient>
   );
 };
 
