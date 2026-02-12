@@ -42,25 +42,21 @@ interface HttpRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: HttpRequestDialogValuesType) => void;
-  defaultEndpoint?: string;
-  defaultMethod?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  defaultBody?: string;
+  defaultValues?: Partial<HttpRequestDialogValuesType>;
 }
 
 export const HttpRequestDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  defaultEndpoint,
-  defaultMethod,
-  defaultBody,
+  defaultValues = {},
 }: HttpRequestDialogProps) => {
   const form = useForm<HttpRequestDialogValuesType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      endpoint: defaultEndpoint || "",
-      method: defaultMethod || "GET",
-      body: defaultBody || "",
+      endpoint: defaultValues.endpoint || "",
+      method: defaultValues.method || "GET",
+      body: defaultValues.body || "",
     },
   });
 
@@ -68,11 +64,11 @@ export const HttpRequestDialog = ({
   useEffect(() => {
     if (!open) return;
     form.reset({
-      endpoint: defaultEndpoint || "",
-      method: defaultMethod || "GET",
-      body: defaultBody || "",
+      endpoint: defaultValues.endpoint || "",
+      method: defaultValues.method || "GET",
+      body: defaultValues.body || "",
     });
-  }, [open, defaultEndpoint, defaultMethod, defaultBody, form]);
+  }, [open, defaultValues, form]);
 
   const watchMethod = form.watch("method");
   const showBodyField = ["POST", "PUT", "PATCH"].includes(watchMethod);
