@@ -1,12 +1,18 @@
 import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
+import { CheckCircleIcon, Loader2Icon, XCircleIcon } from "lucide-react";
+import { type NodeStatus } from "./node-status-indicator";
 
-export function BaseNode({ className, ...props }: ComponentProps<"div">) {
+interface BaseNodeProps extends ComponentProps<"div"> {
+  status?: NodeStatus;
+}
+
+export function BaseNode({ className, status, ...props }: BaseNodeProps) {
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground relative rounded-md border",
+        "relative rounded-sm border border-muted-foreground bg-card text-card-foreground hover:bg-accent",
         "hover:ring-1",
         // React Flow displays node elements inside of a `NodeWrapper` component,
         // which compiles down to a div with the class `react-flow__node`.
@@ -18,7 +24,18 @@ export function BaseNode({ className, ...props }: ComponentProps<"div">) {
         className,
       )}
       {...props}
-    />
+    >
+      {props.children}
+      {status === "error" && (
+        <XCircleIcon className="absolute right-0.5 bottom-0.5 size-4 text-red-700 stroke-2" />
+      )}
+      {status === "success" && (
+        <CheckCircleIcon className="absolute right-0.5 bottom-0.5 size-4 text-green-700 stroke-2" />
+      )}
+      {status === "loading" && (
+        <Loader2Icon className="absolute -right-1.5 -bottom-1.5 size-4 text-blue-700 stroke-2 animate-spin" />
+      )}
+    </div>
   );
 }
 
