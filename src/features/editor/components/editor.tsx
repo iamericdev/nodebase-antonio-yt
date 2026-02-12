@@ -20,11 +20,15 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
+import { useSetAtom } from "jotai";
 import { useCallback, useState } from "react";
+import { editorAtom } from "../store/atom";
 import { AddNodeButton } from "./add-node-button";
 
 export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: workflow } = useSuspenseWorkflow(workflowId);
+
+  const setEditor = useSetAtom(editorAtom);
 
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(workflow.edges);
@@ -54,6 +58,12 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeComponents}
+        onInit={setEditor}
+        snapGrid={[10, 10]}
+        snapToGrid
+        panOnScroll
+        // panOnDrag={false}
+        // selectionOnDrag // enable if you want to select nodes on drag (I'm using a mouse so it'll be hard for me to scroll, the problem I had with relume 😅)
         fitView
         proOptions={{
           hideAttribution: true,

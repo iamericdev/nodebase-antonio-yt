@@ -12,12 +12,15 @@ import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   useSuspenseWorkflow,
+  useUpdateWorkflow,
   useUpdateWorkflowName,
 } from "@/features/workflows/hooks/use-workflows";
+import { useAtomValue } from "jotai";
 import { SaveIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { editorAtom } from "../store/atom";
 
 interface EditorHeaderProps {
   workflowId: string;
@@ -36,9 +39,27 @@ export const EditorHeader = ({ workflowId }: EditorHeaderProps) => {
 };
 
 const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
+  const editor = useAtomValue(editorAtom);
+  const saveWorkflow = useUpdateWorkflow();
+
+  const handleSave = () => {
+    if (!editor) return;
+    const { nodes, edges } = editor.toObject();
+    saveWorkflow.mutate(
+      { id: workflowId, nodes, edges },
+      {
+        onSuccess: (data) => {
+          toast.success(`Workflow ${data.name} saved`);
+        },
+        onError: () => {
+          toast.error("Failed to save workflow");
+        },
+      },
+    );
+  };
   return (
     <div className="ml-auto">
-      <Button size="sm" onClick={() => {}} disabled={false}>
+      <Button size="sm" onClick={handleSave} disabled={saveWorkflow.isPending}>
         <SaveIcon className="size-4" />
         Save
       </Button>
@@ -52,7 +73,7 @@ const EditorBreadCrumbs = ({ workflowId }: { workflowId: string }) => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/dashboard/workflows">Workflows</Link>
+            <Link href="/workflows">Workflows</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />

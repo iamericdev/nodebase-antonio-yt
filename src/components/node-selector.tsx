@@ -112,9 +112,17 @@ export const NodeSelector = ({
             const Icon = nodeType.icon;
             return (
               <div
+                role="button"
+                tabIndex={0}
                 key={nodeType.type}
                 className="w-full justify-start h-auto py-5 px-4 rounded-none cursor-pointer border-l-2 border-transparent hover:border-l-primary"
                 onClick={() => handleNodeSelect(nodeType)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleNodeSelect(nodeType);
+                  }
+                }}
               >
                 <div className="flex items-center gap-6 w-full overflow-hidden">
                   {typeof Icon === "string" ? (
