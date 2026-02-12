@@ -17,7 +17,6 @@ export function BaseNode({ className, ...props }: ComponentProps<"div">) {
         "[.react-flow\\_\\_node.selected_&]:shadow-lg",
         className,
       )}
-      tabIndex={0}
       {...props}
     />
   );
@@ -55,7 +54,7 @@ export function BaseNodeHeaderTitle({
   return (
     <h3
       data-slot="base-node-title"
-      className={cn("user-select-none flex-1 font-semibold", className)}
+      className={cn("select-none flex-1 font-semibold", className)}
       {...props}
     />
   );
