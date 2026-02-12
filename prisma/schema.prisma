@@ -94,8 +94,8 @@ model Workflow {
 
 enum NodeType {
   INITIAL
-  FINAL
-  PROCESS
+  MANUAL_TRIGGER
+  HTTP_REQUEST
 }
 
 model Node {

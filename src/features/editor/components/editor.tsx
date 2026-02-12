@@ -1,7 +1,7 @@
 "use client";
 
 import { ErrorView, LoadingView } from "@/components/entity-component";
-import { nodeComponents } from "@/config/node-componets";
+import { nodeComponents } from "@/config/node-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
 import {
   addEdge,
