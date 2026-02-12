@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -96,9 +98,7 @@ const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSave();
-    } else if (e.key === "Escape") {
+    if (e.key === "Escape") {
       setIsEditing(false);
       setName(workflow.name);
     }
