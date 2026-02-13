@@ -2,6 +2,7 @@ import type {
   NodeExecutor,
   WorkflowContext,
 } from "@/features/executions/types";
+import { httpRequestChannel } from "@/inngest/channels/http-request";
 import Handlebars from "handlebars";
 import { NonRetriableError } from "inngest";
 import ky, { type Options as KyOptions } from "ky";
@@ -25,23 +26,54 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
   nodeId,
   context,
   step,
+  publish,
 }) => {
+  await publish(
+    httpRequestChannel().status({
+      nodeId,
+      status: "loading",
+    }),
+  );
   if (!data.endpoint) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError("HTTP Request node: No endpoint configured");
   }
 
   if (!data.method) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError("HTTP Request node: No method configured");
   }
 
   if (!data.variableName) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError(
       "HTTP Request node: No variable name configured",
     );
   }
 
   // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
-  if (context[data.variableName]) {
+  if (context.hasOwnProperty(data.variableName)) {
+    await publish(
+      httpRequestChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
     throw new NonRetriableError(
       "HTTP Request node: Duplicate variable name not allowed",
     );
@@ -50,15 +82,41 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
   const result = await step.run("http-request", async () => {
     const variableName = data.variableName!;
     const method = data.method!;
-    // https://.../{{variableName.httpResponse.data.id}}
-    const endpoint = Handlebars.compile(data.endpoint!)(context); // gets data from context and passes it to the endpoint (templating language)
+    let endpoint: string;
+    try {
+      // https://.../{{variableName.httpResponse.data.id}}
+      endpoint = Handlebars.compile(data.endpoint!)(context); // gets data from context and passes it to the endpoint (templating language)
+    } catch (error) {
+      await publish(
+        httpRequestChannel().status({
+          nodeId,
+          status: "error",
+        }),
+      );
+      throw new NonRetriableError(
+        `HTTP Request node: Failed to resolve endpoint template: ${error instanceof Error ? error.message : error}`,
+      );
+    }
     const body = data.body;
 
     const options: KyOptions = { method };
 
     if (["POST", "PUT", "PATCH"].includes(method)) {
-      const resolved = Handlebars.compile(body || "{}")(context);
-      JSON.parse(resolved);
+      let resolved: string;
+      try {
+        resolved = Handlebars.compile(body || "{}")(context);
+        JSON.parse(resolved);
+      } catch (error) {
+        await publish(
+          httpRequestChannel().status({
+            nodeId,
+            status: "error",
+          }),
+        );
+        throw new NonRetriableError(
+          `HTTP Request node: Invalid request body template or JSON: ${error instanceof Error ? error.message : error}`,
+        );
+      }
       options.body = resolved;
       options.headers = {
         "Content-Type": "application/json",
@@ -82,6 +140,13 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
       },
     } as WorkflowContext;
   });
+
+  await publish(
+    httpRequestChannel().status({
+      nodeId,
+      status: "success",
+    }),
+  );
 
   return result;
 };
