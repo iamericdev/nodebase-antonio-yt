@@ -15,7 +15,7 @@ export const ExecuteWorkflowButton = ({
       { id: workflowId },
       {
         onSuccess: (data) => {
-          toast.success(`Workflow "${data.name}" executed successfully`);
+          toast.success(`Workflow "${data.name}" is executing.`);
         },
         onError: (error) => {
           toast.error(`Failed to execute workflow: "${error}"`);
