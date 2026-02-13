@@ -6,6 +6,7 @@ import { NonRetriableError } from "inngest";
 import ky, { type Options as KyOptions } from "ky";
 
 type HttpRequestNodeData = {
+  variableName?: string;
   endpoint?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
@@ -21,7 +22,14 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
     throw new NonRetriableError("HTTP Request node: No endpoint configured");
   }
 
+  if (!data.variableName) {
+    throw new NonRetriableError(
+      "HTTP Request node: No variable name configured",
+    );
+  }
+
   const result = await step.run("http-request", async () => {
+    const variableName = data.variableName!;
     const method = data.method || "GET";
     const endpoint = data.endpoint!;
     const body = data.body;
@@ -29,9 +37,10 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
     const options: KyOptions = { method };
 
     if (["POST", "PUT", "PATCH"].includes(method)) {
-      if (body) {
-        options.body = body;
-      }
+      options.body = body;
+      options.headers = {
+        "Content-Type": "application/json",
+      };
     }
 
     const response = await ky(endpoint, options);
@@ -42,10 +51,12 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestNodeData> = async ({
 
     return {
       ...context,
-      httpResponse: {
-        data: responseData,
-        status: response.status,
-        statusText: response.statusText,
+      [variableName]: {
+        httpResponse: {
+          data: responseData,
+          status: response.status,
+          statusText: response.statusText,
+        },
       },
     } as WorkflowContext;
   });

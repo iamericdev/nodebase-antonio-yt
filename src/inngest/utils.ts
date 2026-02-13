@@ -32,7 +32,7 @@ export const topologicalSort = (
   let sortedNodeIds: string[] = [];
   try {
     sortedNodeIds = toposort(edges);
-    // Remove duplocates (from self-edges)
+    // Remove duplicates (from self-edges)
     sortedNodeIds = [...new Set(sortedNodeIds)];
   } catch (error) {
     if (error instanceof Error && error.message.includes("Cyclic")) {
