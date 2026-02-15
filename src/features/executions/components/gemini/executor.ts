@@ -1,5 +1,6 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { geminiChannel } from "@/inngest/channels/gemini";
+import db from "@/lib/db";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -15,6 +16,7 @@ Handlebars.registerHelper("json", (context) => {
 
 type GeminiNodeData = {
   variableName?: string;
+  credentialId?: string;
   model?: (typeof AVAILABLE_MODELS)[number];
   systemPrompt?: string;
   userPrompt?: string;
@@ -44,17 +46,14 @@ export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
     throw new NonRetriableError("Gemini node: No variable name configured");
   }
 
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
-  if (context.hasOwnProperty(data.variableName)) {
+  if (!data.credentialId) {
     await publish(
       geminiChannel().status({
         nodeId,
         status: "error",
       }),
     );
-    throw new NonRetriableError(
-      "Gemini node: Duplicate variable name not allowed",
-    );
+    throw new NonRetriableError("Gemini node: No credential configured");
   }
 
   if (!data.model) {
@@ -98,10 +97,39 @@ export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
     );
   }
 
-  try {
-    // TODO: Fetch gemini api key from secrets (later)
+  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  if (context.hasOwnProperty(variableName)) {
+    await publish(
+      geminiChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError(
+      "Gemini node: Duplicate variable name not allowed",
+    );
+  }
 
-    const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const credential = await step.run("get-credential", () => {
+    return db.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if (!credential) {
+    await publish(
+      geminiChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError("Gemini node: No credential found");
+  }
+
+  try {
+    const API_KEY = credential.value;
     const google = createGoogleGenerativeAI({
       apiKey: API_KEY,
     });
