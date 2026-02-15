@@ -129,7 +129,7 @@ export const DiscordDialog = ({
                   <FormLabel>Webhook URL</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="https://discord.com/api/webhooks/1234567890/1234567890"
+                      placeholder="https://discord.com/api/webhooks/..."
                       {...field}
                     />
                   </FormControl>
