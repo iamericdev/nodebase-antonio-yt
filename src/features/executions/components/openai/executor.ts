@@ -24,6 +24,7 @@ type OpenAINodeData = {
 
 export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
   data,
+  userId,
   nodeId,
   context,
   step,
@@ -87,7 +88,7 @@ export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
     );
   }
 
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  // Validation to prevent duplicate variable names across nodes in a workflow.
   if (context.hasOwnProperty(variableName)) {
     await publish(
       openaiChannel().status({
@@ -104,6 +105,7 @@ export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
     return db.credential.findUnique({
       where: {
         id: data.credentialId,
+        userId,
       },
     });
   });

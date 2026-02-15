@@ -24,6 +24,7 @@ type AnthropicNodeData = {
 
 export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
   data,
+  userId,
   nodeId,
   context,
   step,
@@ -87,7 +88,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
     );
   }
 
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  // Validation to prevent duplicate variable names across nodes in a workflow.
   if (context.hasOwnProperty(variableName)) {
     await publish(
       anthropicChannel().status({
@@ -104,6 +105,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
     return db.credential.findUnique({
       where: {
         id: data.credentialId,
+        userId,
       },
     });
   });
