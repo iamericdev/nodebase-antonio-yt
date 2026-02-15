@@ -76,8 +76,7 @@ export const GeminiDialog = ({
   onSubmit,
   defaultValues = {},
 }: GeminiDialogProps) => {
-  const { data: credentials, isLoading: isLoadingCredentials } =
-    useCredentialsByType(CredentialType.GEMINI);
+  const { data: credentials } = useCredentialsByType(CredentialType.GEMINI);
   const form = useForm<GeminiDialogValuesType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -164,27 +163,19 @@ export const GeminiDialog = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {isLoadingCredentials ? (
-                        <SelectItem value="loading">Loading...</SelectItem>
-                      ) : credentials?.length === 0 ? (
-                        <SelectItem value="none">
-                          No credentials found
+                      {credentials?.map((credential) => (
+                        <SelectItem key={credential.id} value={credential.id}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src={"/images/gemini.svg"}
+                              alt={credential.name}
+                              width={16}
+                              height={16}
+                            />
+                            {credential.name}
+                          </div>
                         </SelectItem>
-                      ) : (
-                        credentials?.map((credential) => (
-                          <SelectItem key={credential.id} value={credential.id}>
-                            <div className="flex items-center gap-2">
-                              <Image
-                                src={"/images/gemini.svg"}
-                                alt={credential.name}
-                                width={16}
-                                height={16}
-                              />
-                              {credential.name}
-                            </div>
-                          </SelectItem>
-                        ))
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>The credential to use.</FormDescription>

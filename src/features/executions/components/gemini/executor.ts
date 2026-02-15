@@ -24,6 +24,7 @@ type GeminiNodeData = {
 
 export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
   data,
+  userId,
   nodeId,
   context,
   step,
@@ -97,7 +98,7 @@ export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
     );
   }
 
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  // Validation to prevent duplicate variable names across nodes in a workflow.
   if (context.hasOwnProperty(variableName)) {
     await publish(
       geminiChannel().status({
@@ -114,6 +115,7 @@ export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
     return db.credential.findUnique({
       where: {
         id: data.credentialId,
+        userId,
       },
     });
   });
