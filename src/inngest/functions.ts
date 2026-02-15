@@ -1,4 +1,5 @@
 import { getExecutor } from "@/features/executions/lib/executor-registry";
+import { ExecutionStatus } from "@/generated/prisma/enums";
 import db from "@/lib/db";
 import { NonRetriableError } from "inngest";
 import { anthropicChannel } from "./channels/anthropic";
@@ -13,7 +14,21 @@ import { inngest } from "./client";
 import { topologicalSort } from "./utils";
 
 export const executeWorkflow = inngest.createFunction(
-  { id: "execute-workflow" },
+  {
+    id: "execute-workflow",
+    onFailure: async ({ event, step }) => {
+      await db.execution.update({
+        where: {
+          inngestEventId: event.data.event.id,
+        },
+        data: {
+          status: ExecutionStatus.FAILED,
+          error: event.data.error.message,
+          errorStack: event.data.error.stack,
+        },
+      });
+    },
+  },
   {
     event: "workflows/execute.workflow",
     channels: [
@@ -28,10 +43,24 @@ export const executeWorkflow = inngest.createFunction(
     ],
   },
   async ({ event, step, publish }) => {
+    const inngestEventId = event.id;
     const workflowId = event.data.workflowId;
-    if (!workflowId) {
-      throw new NonRetriableError("No workflow ID provided");
+
+    if (!inngestEventId || !workflowId) {
+      throw new NonRetriableError(
+        "No Inngest event ID or workflow ID provided",
+      );
     }
+
+    await step.run("create-execution", async () => {
+      await db.execution.create({
+        data: {
+          inngestEventId,
+          workflowId,
+          status: ExecutionStatus.RUNNING,
+        },
+      });
+    });
 
     const sortedNodes = await step.run("prepare-workflow", async () => {
       const workflow = await db.workflow.findUniqueOrThrow({
@@ -74,6 +103,19 @@ export const executeWorkflow = inngest.createFunction(
         publish,
       });
     }
+
+    await step.run("update-execution", async () => {
+      await db.execution.update({
+        where: {
+          inngestEventId,
+        },
+        data: {
+          status: ExecutionStatus.SUCCESS,
+          output: context,
+          completedAt: new Date(),
+        },
+      });
+    });
 
     return { workflowId, result: context };
   },
