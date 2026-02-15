@@ -25,7 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { CredentialType } from "@/generated/prisma/enums";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -46,6 +49,7 @@ const formSchema = z.object({
       message:
         "Variable name must start with a letter or underscore and can only contain letters, numbers, and underscores",
     }),
+  credentialId: z.string().min(1, "Credential is required"),
   model: z.enum(AVAILABLE_MODELS),
   systemPrompt: z.string().optional(),
   userPrompt: z.string().min(1, "User prompt is required"),
@@ -66,10 +70,13 @@ export const AnthropicDialog = ({
   onSubmit,
   defaultValues = {},
 }: AnthropicDialogProps) => {
+  const { data: credentials, isLoading: isLoadingCredentials } =
+    useCredentialsByType(CredentialType.ANTHROPIC);
   const form = useForm<AnthropicDialogValuesType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       variableName: defaultValues.variableName || "",
+      credentialId: defaultValues.credentialId || "",
       model: defaultValues.model || AVAILABLE_MODELS[0],
       systemPrompt: defaultValues.systemPrompt || "",
       userPrompt: defaultValues.userPrompt || "",
@@ -81,11 +88,20 @@ export const AnthropicDialog = ({
     if (!open) return;
     form.reset({
       variableName: defaultValues.variableName || "",
+      credentialId: defaultValues.credentialId || "",
       model: defaultValues.model || AVAILABLE_MODELS[0],
       systemPrompt: defaultValues.systemPrompt || "",
       userPrompt: defaultValues.userPrompt || "",
     });
-  }, [open, defaultValues, form]);
+  }, [
+    open,
+    defaultValues.variableName,
+    defaultValues.credentialId,
+    defaultValues.model,
+    defaultValues.systemPrompt,
+    defaultValues.userPrompt,
+    form,
+  ]);
 
   const watchVariableName = form.watch("variableName") || "anthropic";
 
@@ -121,6 +137,51 @@ export const AnthropicDialog = ({
                     Use this name to reference the result in other nodes.{" "}
                     {`{{${watchVariableName}.aiResponse}}`}
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="credentialId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Credential</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a credential" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingCredentials ? (
+                        <SelectItem value="loading">Loading...</SelectItem>
+                      ) : credentials?.length === 0 ? (
+                        <SelectItem value="none">
+                          No credentials found
+                        </SelectItem>
+                      ) : (
+                        credentials?.map((credential) => (
+                          <SelectItem key={credential.id} value={credential.id}>
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src={"/images/anthropic.svg"}
+                                alt={credential.name}
+                                width={16}
+                                height={16}
+                              />
+                              {credential.name}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>The credential to use.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

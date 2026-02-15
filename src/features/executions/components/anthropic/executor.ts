@@ -1,5 +1,6 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { anthropicChannel } from "@/inngest/channels/anthropic";
+import db from "@/lib/db";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -15,6 +16,7 @@ Handlebars.registerHelper("json", (context) => {
 
 type AnthropicNodeData = {
   variableName?: string;
+  credentialId?: string;
   model?: (typeof AVAILABLE_MODELS)[number];
   systemPrompt?: string;
   userPrompt?: string;
@@ -42,19 +44,6 @@ export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
       }),
     );
     throw new NonRetriableError("Anthropic node: No variable name configured");
-  }
-
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
-  if (context.hasOwnProperty(data.variableName)) {
-    await publish(
-      anthropicChannel().status({
-        nodeId,
-        status: "error",
-      }),
-    );
-    throw new NonRetriableError(
-      "Anthropic node: Duplicate variable name not allowed",
-    );
   }
 
   if (!data.model) {
@@ -98,10 +87,39 @@ export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
     );
   }
 
-  try {
-    // TODO: Fetch anthropic api key from secrets (later)
+  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  if (context.hasOwnProperty(variableName)) {
+    await publish(
+      anthropicChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError(
+      "Anthropic node: Duplicate variable name not allowed",
+    );
+  }
 
-    const API_KEY = process.env.ANTHROPIC_API_KEY;
+  const credential = await step.run("get-credential", () => {
+    return db.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if (!credential) {
+    await publish(
+      anthropicChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError("Anthropic node: No credential found");
+  }
+
+  try {
+    const API_KEY = credential.value;
     const anthropic = createAnthropic({
       apiKey: API_KEY,
     });

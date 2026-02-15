@@ -14,6 +14,7 @@ import {
 
 type AnthropicNodeData = {
   variableName?: string;
+  credentialId?: string;
   model?: (typeof AVAILABLE_MODELS)[number];
   systemPrompt?: string;
   userPrompt?: string;

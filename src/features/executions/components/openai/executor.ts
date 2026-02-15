@@ -1,5 +1,6 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { openaiChannel } from "@/inngest/channels/openai";
+import db from "@/lib/db";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -15,6 +16,7 @@ Handlebars.registerHelper("json", (context) => {
 
 type OpenAINodeData = {
   variableName?: string;
+  credentialId?: string;
   model?: (typeof AVAILABLE_MODELS)[number];
   systemPrompt?: string;
   userPrompt?: string;
@@ -42,19 +44,6 @@ export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
       }),
     );
     throw new NonRetriableError("OpenAI node: No variable name configured");
-  }
-
-  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
-  if (context.hasOwnProperty(data.variableName)) {
-    await publish(
-      openaiChannel().status({
-        nodeId,
-        status: "error",
-      }),
-    );
-    throw new NonRetriableError(
-      "OpenAI node: Duplicate variable name not allowed",
-    );
   }
 
   if (!data.model) {
@@ -98,8 +87,39 @@ export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
     );
   }
 
+  // Validation to prevent duplicate variable names across HTTP request nodes in a workflow.
+  if (context.hasOwnProperty(variableName)) {
+    await publish(
+      openaiChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError(
+      "OpenAI node: Duplicate variable name not allowed",
+    );
+  }
+
+  const credential = await step.run("get-credential", () => {
+    return db.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if (!credential) {
+    await publish(
+      openaiChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError("OpenAI node: No credential found");
+  }
+
   try {
-    const API_KEY = process.env.OPENAI_API_KEY;
+    const API_KEY = credential.value;
     const openai = createOpenAI({
       apiKey: API_KEY,
     });
