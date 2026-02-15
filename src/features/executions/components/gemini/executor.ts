@@ -1,6 +1,7 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { geminiChannel } from "@/inngest/channels/gemini";
 import db from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -131,7 +132,7 @@ export const geminiExecutor: NodeExecutor<GeminiNodeData> = async ({
   }
 
   try {
-    const API_KEY = credential.value;
+    const API_KEY = decrypt(credential.value);
     const google = createGoogleGenerativeAI({
       apiKey: API_KEY,
     });

@@ -1,6 +1,7 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { openaiChannel } from "@/inngest/channels/openai";
 import db from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -121,7 +122,7 @@ export const openaiExecutor: NodeExecutor<OpenAINodeData> = async ({
   }
 
   try {
-    const API_KEY = credential.value;
+    const API_KEY = decrypt(credential.value);
     const openai = createOpenAI({
       apiKey: API_KEY,
     });

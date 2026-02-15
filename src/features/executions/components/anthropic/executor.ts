@@ -1,6 +1,7 @@
 import type { NodeExecutor } from "@/features/executions/types";
 import { anthropicChannel } from "@/inngest/channels/anthropic";
 import db from "@/lib/db";
+import { decrypt } from "@/lib/encryption";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import Handlebars from "handlebars";
@@ -121,7 +122,7 @@ export const anthropicExecutor: NodeExecutor<AnthropicNodeData> = async ({
   }
 
   try {
-    const API_KEY = credential.value;
+    const API_KEY = decrypt(credential.value);
     const anthropic = createAnthropic({
       apiKey: API_KEY,
     });
